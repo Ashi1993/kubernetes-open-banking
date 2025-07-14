@@ -7,12 +7,6 @@ base_path = "${carbon.protocol}://${carbon.host}:${carbon.management.port}"
 #discard_empty_caches = false
 server_role = "default"
 
-[user_store]
-type = {{ .Values.wso2.apim.configurations.userStore.type | quote }}
-{{- range $key, $value := .Values.wso2.apim.configurations.userStore.properties }}
-{{ $key }} = {{ $value | quote }}
-{{- end }}
-
 [super_admin]
 username = {{ .Values.wso2.apim.configurations.adminUsername | quote }}
 {{- if .Values.wso2.apim.secureVaultEnabled }}
@@ -21,6 +15,31 @@ password = "$secret{admin_password}"
 password = {{ .Values.wso2.apim.configurations.adminPassword | quote }}
 {{- end }}
 create_admin_account = true
+
+[realm_manager]
+data_source= "WSO2USER_DB"
+
+[user_store]
+type = {{ .Values.wso2.apim.configurations.userStore.type | quote }}
+{{- range $key, $value := .Values.wso2.apim.configurations.userStore.properties }}
+{{ $key }} = {{ $value | quote }}
+{{- end }}
+
+[user_store.properties]
+UsernameJavaRegEx = "a-zA-Z0-9@._-{3,30}$"
+UsernameJavaScriptRegEx = "^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,4}$"
+SCIMEnabled = false
+IsBulkImportSupported = false
+LeadingOrTrailingSpaceAllowedInUserName = false
+UsernameWithEmailJavaScriptRegEx = "^[\\S]{3,30}$"
+
+[authorization_manager]
+class = "org.wso2.carbon.user.core.authorization.JDBCAuthorizationManager"
+
+[authorization_manager.properties]
+AdminRoleManagementPermissions = "/permission"
+AuthorizationCacheEnabled = true
+GetAllRolesOfUserEnabled = false
 
 [database.apim_db]
 type = "{{ .Values.wso2.apim.configurations.databases.type }}"
@@ -51,6 +70,38 @@ driver = "{{ .Values.wso2.apim.configurations.databases.jdbc.driver }}"
 
 [database.shared_db.pool_options]
 {{- range $key, $value := .Values.wso2.apim.configurations.databases.shared_db.poolParameters }}
+{{ $key }} = "{{ $value }}"
+{{- end }}
+
+[database.config]
+type = "{{ .Values.wso2.apim.configurations.databases.type }}"
+url = "{{ .Values.wso2.apim.configurations.databases.config.url}}"
+username = "{{ .Values.wso2.apim.configurations.databases.config.username }}"
+{{- if .Values.wso2.apim.secureVaultEnabled }}
+password = "$secret{config_db_password}"
+{{- else }}
+password = {{ .Values.wso2.apim.configurations.databases.config.password | quote }}
+{{- end }}
+driver = "{{ .Values.wso2.apim.configurations.databases.jdbc.driver }}"
+
+[database.config.pool_options]
+{{- range $key, $value := .Values.wso2.apim.configurations.databases.config.poolParameters }}
+{{ $key }} = "{{ $value }}"
+{{- end }}
+
+[database.user]
+type = "{{ .Values.wso2.apim.configurations.databases.type }}"
+url = "{{ .Values.wso2.apim.configurations.databases.user.url}}"
+username = "{{ .Values.wso2.apim.configurations.databases.user.username }}"
+{{- if .Values.wso2.apim.secureVaultEnabled }}
+password = "$secret{user_db_password}"
+{{- else }}
+password = {{ .Values.wso2.apim.configurations.databases.user.password | quote }}
+{{- end }}
+driver = "{{ .Values.wso2.apim.configurations.databases.jdbc.driver }}"
+
+[database.user.pool_options]
+{{- range $key, $value := .Values.wso2.apim.configurations.databases.user.poolParameters }}
 {{ $key }} = "{{ $value }}"
 {{- end }}
 
@@ -201,8 +252,8 @@ server_url = "https://{{ .Values.wso2.apim.configurations.iskm.serviceName }}:94
 {{- else }}
 service_url = "https://{{ template "am-all-in-one.fullname" . }}-am-service:${mgt.transport.https.port}/services/"
 {{- end }}
-username= "$ref{super_admin.username}"
-password= "$ref{super_admin.password}"
+username= "{{ .Values.wso2.apim.configurations.iskm.adminUsername }}"
+password= "{{ .Values.wso2.apim.configurations.iskm.adminPassword }}"
 {{- if .Values.wso2.apim.configurations.keyManager.enableLightweightAPIKeyGeneration }}
 enable_lightweight_apikey_generation = true
 {{- else }}
