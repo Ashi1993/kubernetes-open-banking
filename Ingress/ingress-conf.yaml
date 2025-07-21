@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+  client-header-buffer-size: "64k"
+  large-client-header-buffers: 	"4 64k"
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-controller
