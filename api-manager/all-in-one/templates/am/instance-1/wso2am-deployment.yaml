@@ -62,7 +62,8 @@ spec:
           {{- end }}
       {{- if and .Values.wso2.deployment.image.imagePullSecrets.enabled }}
       imagePullSecrets:
-      - name: {{ template "am-all-in-one.fullname" . }}-docker-registry-auth
+#      - name: {{ template "am-all-in-one.fullname" . }}-docker-registry-auth
+      - name: regcred
       {{- end }}
       containers:
         - name: wso2am
@@ -186,16 +187,16 @@ spec:
               mountPath: /home/wso2carbon/wso2-config-volume/repository/resources/security/{{ .Values.wso2.apim.configurations.security.keystores.primary.name }}
               subPath: {{ .Values.wso2.apim.configurations.security.keystores.primary.name }}
             {{- end }}
-            {{- if .Values.wso2.apim.configurations.security.keystores.tls.enabled }}
-            - name: wso2am-keystores
-              mountPath: /home/wso2carbon/wso2-config-volume/repository/resources/security/{{ .Values.wso2.apim.configurations.security.keystores.tls.name }}
-              subPath: {{ .Values.wso2.apim.configurations.security.keystores.tls.name }}
-            {{- end }}
-            {{- if .Values.wso2.apim.configurations.security.keystores.internal.enabled }}
-            - name: wso2am-keystores
-              mountPath: /home/wso2carbon/wso2-config-volume/repository/resources/security/{{ .Values.wso2.apim.configurations.security.keystores.internal.name }}
-              subPath: {{ .Values.wso2.apim.configurations.security.keystores.internal.name }}
-            {{- end }}
+#            {{- if .Values.wso2.apim.configurations.security.keystores.tls.enabled }}
+#            - name: wso2am-keystores
+#              mountPath: /home/wso2carbon/wso2-config-volume/repository/resources/security/{{ .Values.wso2.apim.configurations.security.keystores.tls.name }}
+#              subPath: {{ .Values.wso2.apim.configurations.security.keystores.tls.name }}
+#            {{- end }}
+#            {{- if .Values.wso2.apim.configurations.security.keystores.internal.enabled }}
+#            - name: wso2am-keystores
+#              mountPath: /home/wso2carbon/wso2-config-volume/repository/resources/security/{{ .Values.wso2.apim.configurations.security.keystores.internal.name }}
+#              subPath: {{ .Values.wso2.apim.configurations.security.keystores.internal.name }}
+#            {{- end }}
             {{- end }}
             {{ if .Values.wso2.deployment.persistence.solrIndexing.enabled }}
             - name: wso2am-local-carbondb

@@ -4,18 +4,6 @@ node_ip = "$env{NODE_IP}"
 server_role = "gateway-worker"
 offset = {{ .Values.wso2.apim.portOffset }}
 
-[super_admin]
-username = {{ .Values.wso2.apim.configurations.adminUsername | quote }}
-{{- if .Values.wso2.apim.secureVaultEnabled }}
-password = "$secret{admin_password}"
-{{- else }}
-password = {{ .Values.wso2.apim.configurations.adminPassword | quote }}
-{{- end }}
-create_admin_account = true
-
-[realm_manager]
-data_source= "WSO2USER_DB"
-
 [user_store]
 type = {{ .Values.wso2.apim.configurations.userStore.type | quote }}
 {{- range $key, $value := .Values.wso2.apim.configurations.userStore.properties }}
@@ -30,6 +18,15 @@ IsBulkImportSupported = false
 LeadingOrTrailingSpaceAllowedInUserName = false
 UsernameWithEmailJavaScriptRegEx = "^[\\S]{3,30}$"
 
+[super_admin]
+username = {{ .Values.wso2.apim.configurations.adminUsername | quote }}
+{{- if .Values.wso2.apim.secureVaultEnabled }}
+password = "$secret{admin_password}"
+{{- else }}
+password = {{ .Values.wso2.apim.configurations.adminPassword | quote }}
+{{- end }}
+create_admin_account = true
+
 [authorization_manager]
 class = "org.wso2.carbon.user.core.authorization.JDBCAuthorizationManager"
 
@@ -37,22 +34,6 @@ class = "org.wso2.carbon.user.core.authorization.JDBCAuthorizationManager"
 AdminRoleManagementPermissions = "/permission"
 AuthorizationCacheEnabled = true
 GetAllRolesOfUserEnabled = false
-
-[database.apim_db]
-type = "{{ .Values.wso2.apim.configurations.databases.type }}"
-url = "{{ .Values.wso2.apim.configurations.databases.apim_db.url}}"
-username = "{{ .Values.wso2.apim.configurations.databases.apim_db.username }}"
-{{- if .Values.wso2.apim.secureVaultEnabled }}
-password = "$secret{apim_db}"
-{{- else }}
-password = {{ .Values.wso2.apim.configurations.databases.apim_db.password | quote }}
-{{- end }}
-driver = "{{ .Values.wso2.apim.configurations.databases.jdbc.driver }}"
-
-[database.apim_db.pool_options]
-{{- range $key, $value := .Values.wso2.apim.configurations.databases.apim_db.poolParameters }}
-{{ $key }} = "{{ $value }}"
-{{- end }}
 
 [database.shared_db]
 type = "{{ .Values.wso2.apim.configurations.databases.type }}"
@@ -121,30 +102,6 @@ password = "$secret{truststore_password}"
 password = {{ .Values.wso2.apim.configurations.security.truststore.password | quote }}
 {{- end }}
 
-[apim]
-gateway_type = "Regular,APK,AWS"
-
-[[apim.gateway.environment]]
-name = "Default"
-type = "hybrid"
-gateway_type = "Regular"
-provider = "wso2"
-display_in_api_console = true
-description = "This is a hybrid gateway that handles both production and sandbox token traffic."
-show_as_token_endpoint_url = true
-service_url = "https://localhost:${mgt.transport.https.port}/services/"
-username= "${admin.username}"
-password= "${admin.password}"
-ws_endpoint = "ws://localhost:9099"
-wss_endpoint = "wss://localhost:8099"
-http_endpoint = "http://localhost:${http.nio.port}"
-https_endpoint = "https://localhost:${https.nio.port}"
-websub_event_receiver_http_endpoint = "http://localhost:9021"
-websub_event_receiver_https_endpoint = "https://localhost:8021"
-
-[apim.sync_runtime_artifacts.gateway]
-gateway_labels = {{ toJson .Values.wso2.apim.configurations.sync_runtime_artifacts.gateway.labels }}
-
 [apim.ai]
 {{- if .Values.wso2.apim.configurations.ai.enabled }}
 enable = true
@@ -201,6 +158,10 @@ signing_algorithm = {{ .Values.wso2.apim.configurations.jwt.signingAlgorithm | q
 enable_user_claims = {{ .Values.wso2.apim.configurations.jwt.enableUserClaims }}
 claims_extractor_impl = {{ .Values.wso2.apim.configurations.jwt.claimsExtractorImpl | quote }}
 {{- end }}
+
+[apim.sync_runtime_artifacts.gateway]
+gateway_labels = {{ toJson .Values.wso2.apim.configurations.sync_runtime_artifacts.gateway.labels }}
+skip_list.sequences = ["customErrorFormatter.xml"]
 
 # Traffic Manager configurations
 [apim.throttling]

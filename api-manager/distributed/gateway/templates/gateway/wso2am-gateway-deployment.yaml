@@ -66,7 +66,8 @@ spec:
           {{- end }}
       {{- if and .Values.wso2.deployment.image.imagePullSecrets.enabled }}
       imagePullSecrets:
-      - name: {{ template "apim-helm-gw.fullname" . }}-docker-registry-auth
+#      - name: {{ template "apim-helm-gw.fullname" . }}-docker-registry-auth
+      - name: regcred
       {{- end }}
       containers:
       - name: wso2am-gateway
@@ -177,21 +178,21 @@ spec:
         - name: wso2am-gateway-keystores
           mountPath: /home/wso2carbon/wso2-config-volume/repository/resources/security/{{ .Values.wso2.apim.configurations.security.truststore.name }}
           subPath: {{ .Values.wso2.apim.configurations.security.truststore.name }}
-        {{- if .Values.wso2.apim.configurations.security.keystores.primary.enabled }}
-        - name: wso2am-gateway-keystores
-          mountPath: /home/wso2carbon/wso2-config-volume/repository/resources/security/{{ .Values.wso2.apim.configurations.security.keystores.primary.name }}
-          subPath: {{ .Values.wso2.apim.configurations.security.keystores.primary.name }}
-        {{- end }}
+#        {{- if .Values.wso2.apim.configurations.security.keystores.primary.enabled }}
+#        - name: wso2am-gateway-keystores
+#          mountPath: /home/wso2carbon/wso2-config-volume/repository/resources/security/{{ .Values.wso2.apim.configurations.security.keystores.primary.name }}
+#          subPath: {{ .Values.wso2.apim.configurations.security.keystores.primary.name }}
+#        {{- end }}
         {{- if .Values.wso2.apim.configurations.security.keystores.tls.enabled }}
         - name: wso2am-gateway-keystores
           mountPath: /home/wso2carbon/wso2-config-volume/repository/resources/security/{{ .Values.wso2.apim.configurations.security.keystores.tls.name }}
           subPath: {{ .Values.wso2.apim.configurations.security.keystores.tls.name }}
         {{- end }}
-        {{- if .Values.wso2.apim.configurations.security.keystores.internal.enabled }}
-        - name: wso2am-gateway-keystores
-          mountPath: /home/wso2carbon/wso2-config-volume/repository/resources/security/{{ .Values.wso2.apim.configurations.security.keystores.internal.name }}
-          subPath: {{ .Values.wso2.apim.configurations.security.keystores.internal.name }}
-        {{- end }}
+#        {{- if .Values.wso2.apim.configurations.security.keystores.internal.enabled }}
+#        - name: wso2am-gateway-keystores
+#          mountPath: /home/wso2carbon/wso2-config-volume/repository/resources/security/{{ .Values.wso2.apim.configurations.security.keystores.internal.name }}
+#          subPath: {{ .Values.wso2.apim.configurations.security.keystores.internal.name }}
+#        {{- end }}
       {{- if .Values.wso2.deployment.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.wso2.deployment.nodeSelector | nindent 8 }}

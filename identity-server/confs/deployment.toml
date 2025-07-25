@@ -1,4 +1,4 @@
-# Copyright (c) 2025, WSO2 LLC. (https://www.wso2.com) All Rights Reserved.
+# Copyright (c) 2024, WSO2 LLC. (https://www.wso2.com) All Rights Reserved.
 #
 # WSO2 LLC. licenses this file to you under the Apache License,
 # Version 2.0 (the "License"); you may not use this file except
@@ -44,13 +44,11 @@ create_admin_account = {{ .Values.deploymentToml.superAdmin.createAdminAccount }
 [identity_mgt]
 user_self_registration.callback_url = "https://{{ .Values.deployment.ingress.hostName }}/.*"
 
-[realm_manager]
-data_source= "WSO2USER_DB"
-
 [user_store]
-type = "database_unique_id"
+type = {{ .Values.deploymentToml.userStore.type | quote }}
 class = "org.wso2.carbon.user.core.jdbc.UniqueIDJDBCUserStoreManager"
 
+# -- Added for OB --
 [user_store.properties]
 UsernameJavaRegEx = "a-zA-Z0-9@._-{3,30}$"
 UsernameJavaScriptRegEx = "^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,4}$"
@@ -59,9 +57,11 @@ IsBulkImportSupported = false
 LeadingOrTrailingSpaceAllowedInUserName = false
 UsernameWithEmailJavaScriptRegEx = "^[\\S]{3,30}$"
 
+# -- Added for OB --
 [authorization_manager]
 class = "org.wso2.carbon.user.core.authorization.JDBCAuthorizationManager"
 
+# -- Added for OB --
 [authorization_manager.properties]
 AdminRoleManagementPermissions = "/permission"
 AuthorizationCacheEnabled = true
@@ -107,25 +107,8 @@ driver = {{ .Values.deploymentToml.database.shared.driver | quote }}
 defaultAutoCommit= true
 commitOnReturn= true
 
-[database.config]
-type = {{ .Values.deploymentToml.database.config.type | quote }}
-url = {{ .Values.deploymentToml.database.config.url | quote }}
-{{- if .Values.deployment.secretStore.enabled }}
-username = "$secret{database_config_username}"
-password = "$secret{database_config_password}"
-{{- else }}
-username = {{ .Values.deploymentToml.database.config.username | quote }}
-password = {{ .Values.deploymentToml.database.config.password | quote }}
-{{- end }}
-driver = {{ .Values.deploymentToml.database.config.driver | quote }}
-{{- if .Values.deploymentToml.database.config.poolOptions }}
-[database.config.pool_options]
-{{- range $key, $value := .Values.deploymentToml.database.config.poolOptions }}
-{{ $key }} = {{ $value | quote }}
-{{- end }}
-{{- end }}
-defaultAutoCommit= true
-commitOnReturn= true
+[realm_manager]
+data_source = "WSO2USER_DB"
 
 [database.user]
 type = {{ .Values.deploymentToml.database.user.type | quote }}
@@ -147,6 +130,27 @@ driver = {{ .Values.deploymentToml.database.user.driver | quote }}
 defaultAutoCommit= true
 commitOnReturn= true
 
+[database.config]
+type = {{ .Values.deploymentToml.database.config.type | quote }}
+url = {{ .Values.deploymentToml.database.config.url | quote }}
+{{- if .Values.deployment.secretStore.enabled }}
+username = "$secret{database_config_username}"
+password = "$secret{database_config_password}"
+{{- else }}
+username = {{ .Values.deploymentToml.database.config.username | quote }}
+password = {{ .Values.deploymentToml.database.config.password | quote }}
+{{- end }}
+driver = {{ .Values.deploymentToml.database.config.driver | quote }}
+{{- if .Values.deploymentToml.database.config.poolOptions }}
+[database.config.pool_options]
+{{- range $key, $value := .Values.deploymentToml.database.config.poolOptions }}
+{{ $key }} = {{ $value | quote }}
+{{- end }}
+{{- end }}
+defaultAutoCommit= true
+commitOnReturn= true
+
+# -- Added for OB --
 [[datasource]]
 id="WSO2FS_DB"
 url = {{ .Values.deploymentToml.database.fs_consent.url | quote }}
@@ -239,6 +243,69 @@ local_member_port={{.Values.deploymentToml.clustering.localMemberPort | quote }}
 properties.KUBERNETES_NAMESPACE={{ .Release.Namespace | quote }}
 properties.KUBERNETES_SERVICES={{ include "..fullname" . | quote }}
 {{- end }}
+
+[oauth]
+drop_unregistered_scopes = true
+authorize_all_scopes = true
+
+[oauth.token_cleanup]
+enable = {{.Values.deploymentToml.oauth.tokenCleanup }}
+
+[oauth.token_generation]
+include_username_in_access_token = {{.Values.deploymentToml.oauth.tokenGeneration.includeUsernameInAccessToken }}
+access_token_type = "self_contained"
+
+# Block all unused fileupload with super tenant permissions (SECURITYINTERNAL-1738)
+[[resource.access_control]]
+context="(.*)/fileupload/service(.*)"
+secure=true
+http_method = "all"
+permissions = ["/permission/admin/manage/identity/applicationmgt/create"]
+
+[[resource.access_control]]
+context="(.*)/fileupload(.*)"
+secure=true
+http_method = "all"
+permissions = ["/permission/protected/manage/monitor/tenants"]
+
+# Configing access control for the OB APIs
+[[resource.access_control]]
+context = "(.*)/api/fs/consent/admin/(.*)"
+http_method = "all"
+secure = "true"
+
+[[resource.access_control]]
+allowed_auth_handlers = ["BasicAuthentication"]
+context = "(.*)/api/fs/consent/(.*)"
+http_method = "all"
+permissions = ["/permission/admin"]
+secure = "true"
+
+[[resource.access_control]]
+context = "(.*)/fs/authenticationendpoint/(.*)"
+http_method = "all"
+secure = "false"
+
+[[resource.access_control]]
+allowed_auth_handlers = ["BasicAuthentication"]
+context = "(.*)/api/fs/event-notifications/(.*)"
+http_method = "all"
+permissions = ["/permission/admin"]
+secure = "true"
+
+[[resource.access_control]]
+context = "(.*)/consentmgr/(.*)"
+secure="false"
+http_method="GET, DELETE"
+
+# Configing access control for SCIM2 API required for configure IS 7.x as a key manager
+[[resource.access_control]]
+context="(.*)/scim2/Me"
+secure=true
+http_method="GET"
+cross_tenant=true
+permissions=[]
+scopes=[]
 
 {{- if .Values.deploymentToml.recaptcha.enabled }}
 #Google reCAPTCHA settings.
@@ -349,6 +416,7 @@ Issuer={{ .Values.deploymentToml.totp.issuer | quote }}
 UseCommonIssuer={{ .Values.deploymentToml.totp.useCommonIssuer }}
 EnableAccountLockingForFailedAttempts = {{ .Values.deploymentToml.totp.userAccountLockEnabled }}
 
+# -- Added for OB --
 #================configs related to application-authentication.xml=============
 [authentication.endpoints]
 login_url = "https://{{ .Values.deployment.ingress.hostName }}/authenticationendpoint/login.do"
@@ -364,72 +432,13 @@ parameters = ["sessionDataKeyConsent","relyingParty", "authenticators", "authFai
 #BackupCode = false
 #TokenExpiryTime = 60
 
+# -- Added for OB --
 #================configs related to identity.xml=============
 [identity_data_source]
 skip_db_schema_creation = true
 
-# Block all unused fileupload with super tenant permissions (SECURITYINTERNAL-1738)
-[[resource.access_control]]
-context="(.*)/fileupload/service(.*)"
-secure=true
-http_method = "all"
-permissions = ["/permission/admin/manage/identity/applicationmgt/create"]
-
-[[resource.access_control]]
-context="(.*)/fileupload(.*)"
-secure=true
-http_method = "all"
-permissions = ["/permission/protected/manage/monitor/tenants"]
-
-# Configing access control for the OB APIs
-[[resource.access_control]]
-context = "(.*)/api/fs/consent/admin/(.*)"
-http_method = "all"
-secure = "true"
-
-[[resource.access_control]]
-allowed_auth_handlers = ["BasicAuthentication"]
-context = "(.*)/api/fs/consent/(.*)"
-http_method = "all"
-permissions = ["/permission/admin"]
-secure = "true"
-
-[[resource.access_control]]
-context = "(.*)/fs/authenticationendpoint/(.*)"
-http_method = "all"
-secure = "false"
-
-[[resource.access_control]]
-allowed_auth_handlers = ["BasicAuthentication"]
-context = "(.*)/api/fs/event-notifications/(.*)"
-http_method = "all"
-permissions = ["/permission/admin"]
-secure = "true"
-
-[[resource.access_control]]
-context = "(.*)/consentmgr/(.*)"
-secure="false"
-http_method="GET, DELETE"
-
-# Configing access control for SCIM2 API required for configure IS 7.x as a key manager
-[[resource.access_control]]
-context="(.*)/scim2/Me"
-secure=true
-http_method="GET"
-cross_tenant=true
-permissions=[]
-scopes=[]
-
-[oauth]
-drop_unregistered_scopes = true
-authorize_all_scopes = true
-
-[oauth.token_cleanup]
-enable = {{ .Values.deploymentToml.oauth.tokenCleanup }}
-
-[oauth.token_generation]
-include_username_in_access_token = {{ .Values.deploymentToml.oauth.tokenGeneration.includeUsernameInAccessToken }}
-access_token_type = "self_contained"
+[oauth.endpoints]
+oauth2_authz_url ="https://localhost:9446/oauth2/authorize"
 
 [oauth.endpoints.v2]
 oauth2_consent_page = "${carbon.protocol}://{{ .Values.deployment.ingress.hostName }}/fs/authenticationendpoint/oauth2_authz.do"
@@ -467,30 +476,32 @@ enable = true
 grant_handler = "org.wso2.carbon.identity.oauth2.token.handlers.grant.ClientCredentialsGrantHandler"
 
 [oauth.dcr]
-enable_fapi_enforcement= {{ .Values.deploymentToml.oauth.dcr.fapiEnabled }}
-ssa_jkws= {{ .Values.deploymentToml.oauth.dcr.ssaJwks | quote }}
+enable_fapi_enforcement= {{ .Values.deploymentToml.financial_services.dcr.fapiEnabled }}
+ssa_jkws= {{ .Values.deploymentToml.financial_services.dcr.ssaJwks | quote }}
+
+[oauth.dcrm]
+return_null_fields_in_response= {{ .Values.deploymentToml.financial_services.dcrm.returnNullInResponse }}
 
 [oauth.oidc]
-id_token.signature_algorithm= {{ .Values.deploymentToml.oauth.oidc.id_token.signature_algorithm | quote }}
-enable_claims_separation_for_access_tokens= {{ .Values.deploymentToml.oauth.oidc.claimSeparationEnabled }}
-enable_hybrid_flow_app_level_validation= {{ .Values.deploymentToml.oauth.oidc.hybridFlowValidationEnabled }}
+id_token.signature_algorithm= {{ .Values.deploymentToml.financial_services.oidc.id_token.signature_algorithm | quote }}
+enable_claims_separation_for_access_tokens= {{ .Values.deploymentToml.financial_services.oidc.claimSeparationEnabled }}
+enable_hybrid_flow_app_level_validation= {{ .Values.deploymentToml.financial_services.oidc.hybridFlowValidationEnabled }}
 
 [oauth.oidc.token_endpoint]
-signing_algorithms=["PS256","ES256"]
-#signing_algorithms= {{ join ", " .Values.deploymentToml.oauth.oidc.tokenEPSigningAlgorithms}}
+signing_algorithms= {{ toJson .Values.deploymentToml.financial_services.oidc.tokenEPSigningAlgorithms}}
 
 [oauth.oidc.user_info]
-jwt_signature_algorithm={{ .Values.deploymentToml.oauth.oidc.userInfo.jwtSignatureAlgorithm | quote }}
+jwt_signature_algorithm={{ .Values.deploymentToml.financial_services.oidc.userInfo.jwtSignatureAlgorithm | quote }}
 
 [oauth.oidc.extensions]
 claim_callback_handler = "org.wso2.financial.services.accelerator.identity.extensions.claims.FSDefaultOIDCClaimsCallbackHandler"
 request_object_validator = "org.wso2.financial.services.accelerator.identity.extensions.auth.extensions.request.validator.FSRequestObjectValidationExtension"
 
 [oauth.mutualtls]
-client_certificate_header = {{ .Values.deploymentToml.oauth.mutualtls.clientCertHeaderName | quote }}
+client_certificate_header = {{ .Values.deploymentToml.financial_services.mutualtls.clientCertHeaderName | quote }}
 
 [oauth.jwks_endpoint]
-read_timeout = {{ .Values.deploymentToml.oauth.jwksEndpoint.readTimeout }}
+read_timeout = {{ .Values.deploymentToml.financial_services.jwksEndpoint.readTimeout }}
 
 [application_mgt]
 enable_role_validation = true
@@ -510,14 +521,7 @@ password = {{ .Values.deploymentToml.superAdmin.password | quote }}
 [financial_services.extensions.endpoint]
 enabled = {{ .Values.deploymentToml.financial_services.extensions.enabled }}
 # allowed extensions: "pre_process_client_creation", "pre_process_consent_creation"
-#allowed_extensions = [{{ join ", " .Values.deploymentToml.financial_services.extensions.allowedExtensions }}]
-allowed_extensions = ["pre_process_client_creation", "pre_process_client_update", "pre_process_client_retrieval",
-    "pre_process_consent_creation", "enrich_consent_creation_response", "pre_process_consent_file_upload",
-    "enrich_consent_file_response", "pre_process_consent_retrieval", "validate_consent_file_retrieval",
-    "pre_process_consent_revoke", "enrich_consent_search_response", "populate_consent_authorize_screen",
-    "persist_authorized_consent", "validate_consent_access", "issue_refresh_token", "validate_authorization_request",
-    "validate_event_subscription", "enrich_event_subscription_response", "validate_event_creation",
-    "validate_event_polling", "enrich_event_polling_response", "map_accelerator_error_response"]
+allowed_extensions = {{ toJson .Values.deploymentToml.financial_services.extensions.allowedExtensions }}
 base_url = {{ .Values.deploymentToml.financial_services.extensions.base_url | quote }}
 retry_count =  {{ .Values.deploymentToml.financial_services.extensions.retry_count }}
 connect_timeout =  {{ .Values.deploymentToml.financial_services.extensions.connect_timeout }}
@@ -696,17 +700,20 @@ auth_flow_consent_id_source= {{ .Values.deploymentToml.financial_services.consen
 # Must be configured if "auth_flow_consent_id_source" is set to "requestObject"
 json_path= {{ .Values.deploymentToml.financial_services.consent.consentIdExtract.jsonPath | quote }}
 # Must be configured if "auth_flow_consent_id_source" is set to "requestParam"
+{{- if .Values.deploymentToml.financial_services.consent.consentIdExtract.key }}
 key= {{ .Values.deploymentToml.financial_services.consent.consentIdExtract.key | quote }}
+{{- end }}
 # Optionally configure a regex pattern to further extract the consent id from the extracted value
+{{- if .Values.deploymentToml.financial_services.consent.consentIdExtract.regexPattern }}
 regex_pattern= {{ .Values.deploymentToml.financial_services.consent.consentIdExtract.regexPattern | quote }}
+{{- end }}
 
 [financial_services.consent.manage]
 handler="org.wso2.financial.services.accelerator.consent.mgt.extensions.manage.impl.DefaultConsentManageHandler"
 validator="org.wso2.financial.services.accelerator.consent.mgt.extensions.manage.impl.DefaultConsentManageValidator"
 
 [financial_services.consent.manage_extension]
-allowed_headers = ["x-wso2-client-id"]
-#allowed_headers = [{{ join ", " .Values.deploymentToml.financial_services.consent.consentCreation.allowedHeadersForExtension }}]
+allowed_headers = {{ toJson .Values.deploymentToml.financial_services.consent.consentCreation.allowedHeadersForExtension }}
 
 [[financial_services.consent.authorize_steps.retrieve]]
 class = "org.wso2.financial.services.accelerator.consent.mgt.extensions.authorize.impl.DefaultConsentRetrievalStep"
@@ -759,8 +766,7 @@ enabled= {{ .Values.deploymentToml.financial_services.consent.idempotency.enable
 allowed_time_duration= {{ .Values.deploymentToml.financial_services.consent.idempotency.allowedTimeDuration }}
 header_name= {{ .Values.deploymentToml.financial_services.consent.idempotency.headerName | quote }}
 allowed_for_all_apis= {{ .Values.deploymentToml.financial_services.consent.idempotency.allowedForAllAPIs }}
-allowed_api_resources=["payment-consents"]
-#allowed_api_resources= [{{ join ", " .Values.deploymentToml.financial_services.consent.idempotency.allowedAPIResources }}]
+allowed_api_resources= {{ toJson .Values.deploymentToml.financial_services.consent.idempotency.allowedAPIResources }}
 
 [financial_services.consent.preserve_consent_link]
 enabled=false

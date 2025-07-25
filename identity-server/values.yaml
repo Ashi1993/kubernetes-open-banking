@@ -1,4 +1,4 @@
-# Copyright (c) 2025, WSO2 LLC. (https://www.wso2.com) All Rights Reserved.
+# Copyright (c) 2024-2025, WSO2 LLC. (https://www.wso2.com) All Rights Reserved.
 #
 # WSO2 LLC. licenses this file to you under the Apache License,
 # Version 2.0 (the "License"); you may not use this file except
@@ -29,7 +29,7 @@ deployment:
     profile: "RuntimeDefault"
   ingress:
     # -- Host name of the Identity server as Key Manager
-    hostName: "wso2is"
+    hostName: "wso2is.com"
     # -- Ingress class name
     ingressClassName: "nginx"
     # -- K8s TLS secret for configured hostname
@@ -50,23 +50,22 @@ deployment:
       nginx.ingress.kubernetes.io/proxy-buffering: "on"
       # Sets the size of the buffer proxy_buffer_size used for reading the first part of the response received from the proxied server. By default proxy buffer size is set as "64k".(Ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#proxy-buffer-size)
       nginx.ingress.kubernetes.io/proxy-buffer-size: "64k"
+      nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "64k"
+      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
 
   image:
     # -- Container image registry host name
-#    registry: "docker.wso2.com"
-    registry: "ashi1993"
+    registry: "docker.wso2.com"
     # -- Container image repository name
-#    repository: "wso2is"
-    repository: "ashi-test-repo"
+    repository: "wso2is"
     # -- Container image digest
     digest: ""
     # -- Container image tag. Either "tag" or "digest" should defined
-#    tag: "7.1.0"
-    tag: "wso2-fsiam-400"
+    tag: "7.1.0"
     # -- Refer to the Kubernetes documentation on updating images (Ref: https://kubernetes.io/docs/concepts/containers/images/#updating-images)
     pullPolicy: "Always"
     # -- image pull secret name
-    imagePullSecret: "regcred"
+    imagePullSecret: ""
   # -- Progress deadline seconds where the Deployment controller waits before indicating (in the Deployment status) that the Deployment progress has stalled.
   progressDeadlineSeconds: 600
   # -- preStopHookWaitInSeconds waits before calling server stop in the pre stop hook.
@@ -124,29 +123,29 @@ deployment:
   # -- Startup probe executed prior to Liveness Probe taking over
   startupProbe:
     # -- Number of seconds after the container has started before startup probes are initiated
-    initialDelaySeconds: 600
+    initialDelaySeconds: 60
     # -- How often (in seconds) to perform the probe
-    periodSeconds: 50
+    periodSeconds: 5
     # -- Number of attempts
-    failureThreshold: 300
+    failureThreshold: 30
   # -- Indicates whether the container is running
   livenessProbe:
     # -- How often (in seconds) to perform the probe
-    periodSeconds: 100
+    periodSeconds: 10
   # -- Indicates whether the container is ready to service requests
   readinessProbe:
     # -- Number of seconds after the container has started before readiness probes are initiated
-    initialDelaySeconds: 600
+    initialDelaySeconds: 60
     # -- How often (in seconds) to perform the probe
-    periodSeconds: 100
+    periodSeconds: 10
   resources:
     # -- These are the minimum resource recommendations for running WSO2 Identity and Access Management product profiles
     # -- as per official documentation (Ref: https://is.docs.wso2.com/en/latest/setup/installation-prerequisites/)
     requests:
       # -- The minimum amount of memory that should be allocated for a Pod
-      memory: "4Gi"
+      memory: "2Gi"
       # -- The minimum amount of CPU that should be allocated for a Pod
-      cpu: "3"
+      cpu: "2"
     limits:
       # -- The maximum amount of memory that should be allocated for a Pod
       memory: "4Gi"
@@ -167,9 +166,9 @@ deployment:
   enableCorrelationLogs: false
   externalJKS:
     # -- Mount external  keystore and trustores
-    enabled: false
+    enabled: true
     # -- K8s secret name which contains JKS files
-    secretName: "keystores"
+    secretName: "iam-keystore-secret"
   persistence:
     # -- Enable persistence for artifact sharing
     enabled: false
@@ -194,7 +193,7 @@ deployment:
     enabled: false
     azure:
       # -- Enable Azure Key Vault integration.
-      enabled: false
+      enabled: true
       keyVault:
         # -- Name of the target Azure Key Vault instance
         name: ""
@@ -253,7 +252,7 @@ deploymentToml:
     key: "3cc0481b70794667b5bee7e2beed2de4"
   clustering:
     # -- Enable clustering. Ref: https://is.docs.wso2.com/en/latest/deploy/configure-hazelcast/
-    enabled: false
+    enabled: true
     # -- Cluster domain
     domain: "wso2.is.domain"
     # -- This defines membership schema type
@@ -265,9 +264,9 @@ deploymentToml:
       # -- The SQL server type(ex: mysql, mssql)
       type: "mysql"
       # -- The database username
-      username: "malshani"
+      username: "ashirwada"
       # -- The database JDBC URL
-      url: "jdbc:mysql://accelerator-mysql8.mysql.database.azure.com:3306/helm_fs_identitydb?autoReconnect=true&amp;useSSL=false"
+      url: "jdbc:mysql://mysql-ob4.mysql.database.azure.com:3306/fs_identitydb?autoReconnect=true&amp;useSSL=false"
       # -- The password
       password: "p@ssw0rd"
       # -- The database JDBC driver
@@ -282,9 +281,9 @@ deploymentToml:
       # -- The SQL server type(ex: mysql, mssql)
       type: "mysql"
       # -- The database username
-      username: "malshani"
+      username: "ashirwada"
       # -- The database JDBC URL
-      url: "jdbc:mysql://accelerator-mysql8.mysql.database.azure.com:3306/helm_fs_iskm_configdb?autoReconnect=true&amp;useSSL=false"
+      url: "jdbc:mysql://mysql-ob4.mysql.database.azure.com:3306/fs_iskm_configdb?autoReconnect=true&amp;useSSL=false"
       # -- The database password
       password: "p@ssw0rd"
       # -- The database JDBC driver
@@ -299,9 +298,9 @@ deploymentToml:
       # -- The SQL server type(ex: mysql, mssql)
       type: "mysql"
       # -- The database username
-      username: "malshani"
+      username: "ashirwada"
       # -- The database JDBC URL
-      url: "jdbc:mysql://accelerator-mysql8.mysql.database.azure.com:3306/helm_fs_userdb?autoReconnect=true&amp;useSSL=false"
+      url: "jdbc:mysql://mysql-ob4.mysql.database.azure.com:3306/fs_userdb?autoReconnect=true&amp;useSSL=false"
       # -- The database password
       password: "p@ssw0rd"
       # -- The database JDBC driver
@@ -316,9 +315,9 @@ deploymentToml:
       # -- The SQL server type(ex: mysql, mssql)
       type: "mysql"
       # -- The database username
-      username: "malshani"
+      username: "ashirwada"
       # -- The database JDBC URL
-      url: "jdbc:mysql://accelerator-mysql8.mysql.database.azure.com:3306/helm_fs_iskm_configdb?autoReconnect=true&amp;useSSL=false"
+      url: "jdbc:mysql://mysql-ob4.mysql.database.azure.com:3306/fs_iskm_configdb?autoReconnect=true&amp;useSSL=false"
       # -- The database password
       password: "p@ssw0rd"
       # -- The database JDBC driver
@@ -329,13 +328,14 @@ deploymentToml:
         maxWait: "600000"
         minIdle: "10"
         validationInterval: "30000"
+      # --- Added for OB ---
     fs_consent:
       # -- The SQL server type(ex: mysql, mssql)
       type: "mysql"
       # -- The database username
-      username: "malshani"
+      username: "ashirwada"
       # -- The database JDBC URL
-      url: "jdbc:mysql://accelerator-mysql8.mysql.database.azure.com:3306/helm_fs_consentdb?autoReconnect=true&amp;useSSL=false"
+      url: "jdbc:mysql://mysql-ob4.mysql.database.azure.com:3306/fs_consentdb?autoReconnect=true&amp;useSSL=false"
       # -- The database password
       password: "p@ssw0rd"
       # -- The database JDBC driver
@@ -393,23 +393,6 @@ deploymentToml:
     tokenGeneration:
       # -- Add UserName Assertions in Access Tokens. Ref: https://is.docs.wso2.com/en/6.0.0/deploy/enable-assertions-in-access-tokens/
       includeUsernameInAccessToken: false
-    dcr:
-        # -- Enable FAPI Compliance for apps generated from Dynamic Client Registration.
-      fapiEnabled: true
-      # -- JWKS URL to validate the signature of the Software Statement.
-      ssaJwks: "https://keystore.openbankingtest.org.uk/0015800001HQQrZAAX/0015800001HQQrZAAX.jwks"
-    oidc:
-      id_token:
-        signature_algorithm: "PS256"
-      claimSeparationEnabled: false
-      hybridFlowValidationEnabled: false
-      tokenEPSigningAlgorithms: ["PS256","ES256"]
-      userInfo:
-        jwtSignatureAlgorithm: "PS256"
-    mutualtls:
-      clientCertHeaderName: "x-wso2-mutual-auth-cert"
-    jwksEndpoint:
-      readTimeout: 5000
   transport:
     https:
       properties:
@@ -430,7 +413,7 @@ deploymentToml:
       ciphers: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384,TLS_DHE_DSS_WITH_AES_256_GCM_SHA384,TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256,TLS_DHE_DSS_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384,TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384,TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,TLS_DHE_DSS_WITH_AES_256_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA,TLS_ECDH_RSA_WITH_AES_256_CBC_SHA,TLS_DHE_DSS_WITH_AES_256_CBC_SHA,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256,TLS_DHE_DSS_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA,TLS_ECDH_RSA_WITH_AES_128_CBC_SHA,TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
   userAccountLock:
     # -- Enable user account lock. Ref: https://is.docs.wso2.com/en/latest/guides/identity-lifecycles/lock-account/
-    enabled: false
+    enabled: true
     loginAttempts:
       # -- This indicates the number of consecutive attempts that a user can try to log in without the account getting locked. If the value you specify is 2, the account gets locked if the login attempt fails twice.
       allowedFailedAttempts: 5
@@ -443,10 +426,10 @@ deploymentToml:
       # -- Enable email OTP. Ref: https://is.docs.wso2.com/en/latest/guides/mfa/email-otp-config-advanced/#email-otp-configurations
       enabled: false
       # -- Authentication endpoint URL of the authenticator.
-      authenticationEndpointURL: "https://localhost:9446/emailotpauthenticationendpoint/emailotp.jsp"
+      authenticationEndpointURL: "https://localhost:9443/emailotpauthenticationendpoint/emailotp.jsp"
       # -- Error page that will be displayed in case of an authentication failure.
-      authenticationEndpointErrorPage: "https://localhost:9446/emailotpauthenticationendpoint/emailotpError.jsp"
-      addressRequestPage: "https://localhost:9446/emailotpauthenticationendpoint/emailAddress.jsp"
+      authenticationEndpointErrorPage: "https://localhost:9443/emailotpauthenticationendpoint/emailotpError.jsp"
+      addressRequestPage: "https://localhost:9443/emailotpauthenticationendpoint/emailAddress.jsp"
       # -- This parameter defines how the email ID will be retrieved.
       usecase: "local"
       # -- You can define multiple user stores per tenant as comma separated values.
@@ -462,7 +445,7 @@ deploymentToml:
       emailAddressRegex: '(?&lt;=.{1}).(?=.*@)'
       tokenExpirationTime: 300000
       # -- Enable account locking by email OTP. Ref: https://is.docs.wso2.com/en/latest/guides/identity-lifecycles/lock-accounts-by-failed-otp-attempts/
-      userAccountLockEnabled: true
+      userAccountLockEnabled: false
     sms:
       # -- Enable SMS OTP. Ref: https://is.docs.wso2.com/en/latest/guides/mfa/sms-otp-config-advanced/
       enabled: false
@@ -471,7 +454,7 @@ deploymentToml:
       mobileNumberRegPage: "/smsotpauthenticationendpoint/mobile.jsp"
       retryEnable: true
       resendEnable: true
-      backupCode: false
+      backupCode: true
       enableByUserClaim: true
       usecase: "local"
       secondaryUserstore: "primary"
@@ -500,18 +483,41 @@ deploymentToml:
     # -- Enable account locking by OTP. Ref: https://is.docs.wso2.com/en/latest/guides/identity-lifecycles/lock-accounts-by-failed-otp-attempts/
     userAccountLockEnabled: false
   financial_services:
+    # --- Added for OB ---
+    dcr:
+      # -- Enable FAPI Compliance for apps generated from Dynamic Client Registration.
+      fapiEnabled: true
+      # -- JWKS URL to validate the signature of the Software Statement.
+      ssaJwks: "https://keystore.openbankingtest.org.uk/0015800001HQQrZAAX/0015800001HQQrZAAX.jwks"
+    dcrm:
+      returnNullInResponse: false
+    # --- Added for OB ---
+    oidc:
+      id_token:
+        signature_algorithm: "PS256"
+      claimSeparationEnabled: false
+      hybridFlowValidationEnabled: false
+      tokenEPSigningAlgorithms: [ "PS256","ES256" ]
+      userInfo:
+        jwtSignatureAlgorithm: "PS256"
+    # --- Added for OB ---
+    mutualtls:
+      clientCertHeaderName: "x-wso2-mutual-auth-cert"
+    # --- Added for OB ---
+    jwksEndpoint:
+      readTimeout: 5000
     httpConnectionPool:
       maxConnections: 2000
       maxConnectionsPerRoute: 1500
     extensions:
       enabled: false
-      allowedExtensions: ["pre_process_client_creation", "pre_process_client_update", "pre_process_client_retrieval",
-                          "pre_process_consent_creation", "enrich_consent_creation_response", "pre_process_consent_file_upload",
-                          "enrich_consent_file_response", "pre_process_consent_retrieval", "validate_consent_file_retrieval",
-                          "pre_process_consent_revoke", "enrich_consent_search_response", "populate_consent_authorize_screen",
-                          "persist_authorized_consent", "validate_consent_access", "issue_refresh_token", "validate_authorization_request",
-                          "validate_event_subscription", "enrich_event_subscription_response", "validate_event_creation",
-                          "validate_event_polling", "enrich_event_polling_response", "map_accelerator_error_response"]
+      allowedExtensions: [ "pre_process_client_creation", "pre_process_client_update", "pre_process_client_retrieval",
+                           "pre_process_consent_creation", "enrich_consent_creation_response", "pre_process_consent_file_upload",
+                           "enrich_consent_file_response", "pre_process_consent_retrieval", "validate_consent_file_retrieval",
+                           "pre_process_consent_revoke", "enrich_consent_search_response", "populate_consent_authorize_screen",
+                           "persist_authorized_consent", "validate_consent_access", "issue_refresh_token", "validate_authorization_request",
+                           "validate_event_subscription", "enrich_event_subscription_response", "validate_event_creation",
+                           "validate_event_polling", "enrich_event_polling_response", "map_accelerator_error_response" ]
       base_url: ""
       retry_count: 5
       connect_timeout: 5
@@ -544,13 +550,13 @@ deploymentToml:
           tokenEndpointAuthSigningAlgValidatorEnabled: true
     consent:
       consentCreation:
-        allowedHeadersForExtension: ["x-wso2-client-id"]
+        allowedHeadersForExtension: [ "x-wso2-client-id" ]
       preInitiatedConsent: true
       consentIdSource: "requestObject"
       consentIdExtract:
         jsonPath: "/id_token/openbanking_intent_id/value"
-        key: "key-name"
-        regexPattern: "regex-pattern"
+        key: ""
+        regexPattern: ""
       consentValidation:
         signatureAlias: "wso2carbon"
         jwtPayloadEnabled: true
@@ -570,7 +576,7 @@ deploymentToml:
         allowedTimeDuration: 1440
         headerName: "x-idempotency-key"
         allowedForAllAPIs: false
-        allowedAPIResources: ["payment-consents"]
+        allowedAPIResources: [ "payment-consents" ]
     identity:
       consentIdClaimName: "consent_id"
       appendConsentIdToTokenIdToken: false

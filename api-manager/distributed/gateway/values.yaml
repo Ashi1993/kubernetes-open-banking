@@ -79,7 +79,7 @@ kubernetes:
   ingressClass: "nginx"
   ingress:
     # -- Kubernetes secret created for Ingress TLS
-    tlsSecret: ""
+    tlsSecret: "am-tls"
     ratelimit:
       # -- Ingress rate limit
       enabled: false
@@ -94,7 +94,8 @@ kubernetes:
       annotations:
         nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
         nginx.ingress.kubernetes.io/proxy-buffering: "on"
-        nginx.ingress.kubernetes.io/proxy-buffer-size: "8k"
+        nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+        nginx.ingress.kubernetes.io/ssl-passthrough: "true"
     websocket:
       # -- Ingress hostname for Websocket
       hostname: "websocket.wso2.com"
@@ -148,7 +149,7 @@ wso2:
     # Logging related configurations
     log4j2:
         # -- Console loggers that can be enabled. Allowed values are AUDIT_LOG_CONSOLE, HTTP_ACCESS_CONSOLE, TRANSACTION_CONSOLE, CORRELATION_CONSOLE
-        loggers: ""
+        loggers: "synapse-wire"
 
         # -- Appenders
         appenders: ""
@@ -166,42 +167,25 @@ wso2:
         type: "database_unique_id"
         # -- User store properties
         properties:
-          key: value
+          class: "org.wso2.carbon.user.core.jdbc.UniqueIDJDBCUserStoreManager"
       # -- Super admin username
-      adminUsername: ""
+      adminUsername: "am_admin@wso2.com"
       # -- Super admin password
-      adminPassword: ""
+      adminPassword: "wso2123"
       databases:
         # -- Database type. eg: mysql, oracle, mssql, postgres
-        type: ""
+        type: "mysql"
         jdbc:
           # -- JDBC driver class name
-          driver: ""
-        # -- APIM DB configurations.
-        apim_db:
-          # -- APIM DB URL
-          url: ""
-          # -- APIM DB username
-          username: ""
-          # -- APIM DB password
-          password: ""
-          # -- APIM database JDBC pool parameters
-          poolParameters:
-            defaultAutoCommit: true
-            testOnBorrow: true
-            testWhileIdle: true
-            validationInterval: 30000
-            maxActive: 100
-            maxWait: 60000
-            minIdle: 5
+          driver: "com.mysql.jdbc.Driver"
         # -- APIM SharedDB configurations. This is required for gateway only in a multi-tenancy scenario
         shared_db:
           # -- APIM SharedDB URL
-          url: ""
+          url: "jdbc:mysql://mysql-ob4.mysql.database.azure.com:3306/am_configdb?autoReconnect=true&amp;useSSL=false"
           # -- APIM SharedDB username
-          username: ""
+          username: "ashirwada"
           # -- APIM SharedDB password
-          password: ""
+          password: "p@ssw0rd"
           # -- APIM database JDBC pool parameters
           poolParameters:
             defaultAutoCommit: true
@@ -220,7 +204,7 @@ wso2:
 
       security:
         # -- Kubernetes secret containing the keystores and truststore
-        jksSecretName: "apim-keystore-secret"
+        jksSecretName: "apim-gw-keystore-secret"
         keystores:
           primary:
             # -- Primary keystore enabled
@@ -241,9 +225,9 @@ wso2:
             # -- TLS keystore alias
             alias: "wso2carbon"
             # -- TLS keystore password
-            password: ""
+            password: "wso2carbon"
             # -- TLS keystore key password
-            keyPassword: ""
+            keyPassword: "wso2carbon"
           internal:
             # -- Internal keystore enabled
             enabled: false
@@ -259,21 +243,22 @@ wso2:
           # -- Truststore name
           name: "client-truststore.jks"
           # -- Truststore password
-          password: ""
+          password: "wso2carbon"
 
       km:
         # -- Key manager service name if default Resident KM is used
-        serviceUrl: "wso2am-cp-service"
+        serviceUrl: "ob4-testing-helm-am-wso2am-all-in-one-am-service"
         # -- Key Manager service port
         servicePort: 9443        
 
       iskm:
         # If Identity Server is used as the Resident KM
-        enabled: false
+        enabled: true
         # Kubernetes service name exposing Identity Server
-        serviceName: ""
-        adminUsername: ""
-        adminPassword: ""
+        serviceName: "ob4-testing-helm-identity-server"
+        servicePort: 9446
+        adminUsername: "is_admin@wso2.com"
+        adminPassword: "wso2123"
 
       sync_runtime_artifacts:
         gateway:
@@ -301,14 +286,14 @@ wso2:
       throttling:
         # -- Traffic manager loadbalancer service url for throttling.
         # If the traffic manager is separated from control-plane, all urls should be pointed to traffic-manager ones.
-        serviceUrl: "wso2am-cp-service"
+        serviceUrl: "ob4-testing-helm-am-wso2am-all-in-one-am-service-1"
         portOffset: 0
         # -- Port of the service URL
         servicePort: 9443
         # -- Traffic manager service urls. You only need to define one if the TM is not in HA.
         urls:
-          - "wso2am-cp-1-service"
-          - "wso2am-cp-2-service"
+          - "ob4-testing-helm-am-wso2am-all-in-one-am-service-1"
+#          - "wso2am-cp-2-service"
         # -- Enable unlimited throttling tier
         unlimitedTier: true
         # -- Enable header based throttling
@@ -325,13 +310,13 @@ wso2:
         # This should be enabled if the traffic manager is separated from the control-plane.
         enabled: false
         # -- Event hub (control plane) loadbalancer service url
-        serviceUrl: "wso2am-cp-service"
+        serviceUrl: "ob4-testing-helm-am-wso2am-all-in-one-am-service-1"
         # -- Event hub (control plane) service port
         servicePort: 9443
         # -- Event hub service urls
         urls:
-          - "wso2am-cp-1-service"
-          - "wso2am-cp-2-service"
+          - "ob4-testing-helm-am-wso2am-all-in-one-am-service-1"
+#          - "wso2am-cp-2-service"
         
       # APIM cache related configurations
       cache:
@@ -410,7 +395,7 @@ wso2:
               hostnameVerifier: "AllowAll"
           listener:
             certRevocationValidation:
-              enable: true
+              enable: false
               expiryValidationEnable: true
               fullChainValidationEnable: false
 
@@ -427,15 +412,15 @@ wso2:
       # -- Container registry credentials.
       # Specify image pull secrets for private registries
       imagePullSecrets:
-        enabled: false
-        username: ""
-        password: ""
+        enabled: true
+        username: "ashi1993"
+        password: "1qaz2wsxA#"
       # -- Container registry hostname
-      registry: ""
+      registry: "ashi1993"
       # -- Azure ACR repository name consisting the image
-      repository: ""
+      repository: "ashi-test-repo"
       # -- Docker image digest
-      digest: ""
+      digest: "sha256:1f3bcd97a35b62b29c770e0b559b18d6a5973fcbb3e5786fa222f5014dbdb4bc"
       # -- Refer to the Kubernetes documentation on updating images (https://kubernetes.io/docs/concepts/containers/images/#updating-images)
       imagePullPolicy: Always
 
@@ -491,12 +476,12 @@ wso2:
         sleepSeconds: 10
 
     # Number of deployment replicas
-    replicas: 2
+    replicas: 1
     # HPA configurations
     # -- Minimum replicas for HPA
-    minReplicas: 2
+    minReplicas: 1
     # -- Maximum replicas for HPA
-    maxReplicas: 3
+    maxReplicas: 1
     # -- Target CPU utilization percentage for HPA
     cpuUtilizationPercentage: 75
     # -- Target memory utilization percentage for HPA

@@ -133,7 +133,7 @@ kubernetes:
   ingressClass: "nginx"
   ingress:
     # -- Kubernetes secret created for Ingress TLS
-    tlsSecret: ""
+    tlsSecret: "am-tls"
     ratelimit:
       # -- Ingress rate limit
       enabled: false
@@ -151,8 +151,9 @@ kubernetes:
         nginx.ingress.kubernetes.io/affinity: "cookie"
         nginx.ingress.kubernetes.io/session-cookie-name: "route"
         nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
+        nginx.ingress.kubernetes.io/ssl-passthrough: "true"
     gateway:
-      enabled: true
+      enabled: false
       # -- Ingress hostname for Gateway pass-through
       hostname: "gw.wso2.com"
       # -- Ingress annotations for Gateway pass-through
@@ -161,14 +162,14 @@ kubernetes:
         nginx.ingress.kubernetes.io/proxy-buffering: "on"
         nginx.ingress.kubernetes.io/proxy-buffer-size: "8k"
     websocket:
-      enabled: true
+      enabled: false
       # -- Ingress hostname for Websocket
       hostname: "websocket.wso2.com"
       # -- Ingress annotations for Websocket
       annotations:
         #todo: add websocket specific annotations
     websub:
-      enabled: true
+      enabled: false
       # -- Ingress hostname for Websub
       hostname: "websub.wso2.com"
       # -- Ingress annotations for Websub
@@ -235,25 +236,25 @@ wso2:
         type: "database_unique_id"
         # -- User store properties
         properties:
-          # key: value
+          class: "org.wso2.carbon.user.core.jdbc.UniqueIDJDBCUserStoreManager"
       # -- Super admin username
-      adminUsername: "admin"
+      adminUsername: "am_admin@wso2.com"
       # -- Super admin password
-      adminPassword: "admin"
+      adminPassword: "wso2123"
       databases:
         # -- Database type. eg: mysql, oracle, mssql, postgres
-        type: ""
+        type: "mysql"
         jdbc:
           # -- JDBC driver class name
-          driver: ""
+          driver: "com.mysql.jdbc.Driver"
         # -- APIM APIMDB configurations. This is required for gateway only in a multi-tenancy scenario
         apim_db:
           # -- APIM APIMDB URL
-          url: ""
+          url: "jdbc:mysql://mysql-ob4.mysql.database.azure.com:3306/apimgtdb?autoReconnect=true&amp;useSSL=false"
           # -- APIM APIMDB username
-          username: ""
+          username: "ashirwada"
           # -- APIM APIMDB password
-          password: ""
+          password: "p@ssw0rd"
           # -- APIM database JDBC pool parameters
           poolParameters:
             defaultAutoCommit: true
@@ -265,11 +266,43 @@ wso2:
             minIdle: 5
         shared_db:
           # -- APIM SharedDB URL
-          url: ""
+          url: "jdbc:mysql://mysql-ob4.mysql.database.azure.com:3306/am_configdb?autoReconnect=true&amp;useSSL=false"
           # -- APIM SharedDB username
-          username: ""
+          username: "ashirwada"
           # -- APIM SharedDB password
-          password: ""
+          password: "p@ssw0rd"
+          # -- APIM database JDBC pool parameters
+          poolParameters:
+            defaultAutoCommit: true
+            testOnBorrow: true
+            testWhileIdle: true
+            validationInterval: 30000
+            maxActive: 100
+            maxWait: 60000
+            minIdle: 5
+        config:
+          # -- APIM Config URL
+          url: "jdbc:mysql://mysql-ob4.mysql.database.azure.com:3306/am_configdb?autoReconnect=true&amp;useSSL=false"
+          # -- APIM Config username
+          username: "ashirwada"
+          # -- APIM Config password
+          password: "p@ssw0rd"
+          # -- APIM database JDBC pool parameters
+          poolParameters:
+            defaultAutoCommit: true
+            testOnBorrow: true
+            testWhileIdle: true
+            validationInterval: 30000
+            maxActive: 100
+            maxWait: 60000
+            minIdle: 5
+        user:
+          # -- APIM UserDB URL
+          url: "jdbc:mysql://mysql-ob4.mysql.database.azure.com:3306/am_userdb?autoReconnect=true&amp;useSSL=false"
+          # -- APIM UserDB username
+          username: "ashirwada"
+          # -- APIM UserDB password
+          password: "p@ssw0rd"
           # -- APIM database JDBC pool parameters
           poolParameters:
             defaultAutoCommit: true
@@ -290,7 +323,7 @@ wso2:
 
       security:
         # -- Kubernetes secret containing the keystores and truststore
-        jksSecretName: ""
+        jksSecretName: "apim-keystore-secret"
         keystores:
           primary:
             # -- Primary keystore enabled
@@ -300,7 +333,7 @@ wso2:
             # -- Primary keystore alias
             alias: "wso2carbon"
             # -- Primary keystore password
-            password: ""
+            password: "wso2carbon"
             # -- Primary keystore key password
             keyPassword: ""
           tls:
@@ -329,7 +362,7 @@ wso2:
           # -- Truststore name
           name: "client-truststore.jks"
           # -- Truststore password
-          password: ""
+          password: "wso2carbon"
 
       gateway:
         # -- APIM Gateway environments
@@ -355,11 +388,14 @@ wso2:
 
       iskm:
         # If Identity Server is used as the Resident KM
-        enabled: false
+        enabled: true
         # Kubernetes service name exposing Identity Server
-        serviceName: ""
+        serviceName: "ob4-testing-helm-identity-server"
+        servicePort: 9446
         # Revoke URL of Identity Server
         revokeURL: ""
+        adminUsername: "is_admin@wso2.com"
+        adminPassword: "wso2123"
       
       jwt:
         # Enable backend JWT generation in gateway
@@ -383,17 +419,17 @@ wso2:
       cache:
         gateway_token:
           # -- Gateway token cache enabled
-          enabled: true
+          enabled: false
           # -- Gateway token cache expiration time
           expiryTime: "15m"
         resource:
           # -- Gateway resource cache enabled
-          enabled: true
+          enabled: false
           # -- Gateway resource cache expiration time
           expiryTime: "900s"
         km_token:
           # -- Gateway KM token cache enabled
-          enabled: true
+          enabled: false
           # -- Gateway KM token cache expiration time
           expiryTime: "15m"
         recent_apis:
@@ -405,12 +441,12 @@ wso2:
           enabled: false
         jwt_claim:
           # -- Gateway JWT claim cache enabled
-          enabled: true
+          enabled: false
           # -- Gateway JWT claim cache expiration time
           expiryTime: "15m"
         tags:
           # -- Gateway tags cache enabled
-          enabled: true
+          enabled: false
           expiryTime: "2m"
 
       # APIM OAuth configurations
@@ -425,7 +461,7 @@ wso2:
         enableTokenEncryption: false
         # -- Enable token hashing
         enableTokenHashing: false
-        oauth2JWKSUrl: ""
+        oauth2JWKSUrl: "https://localhost:9443/oauth2/jwks"
 
       # APIM Devportal configurations
       devportal:
@@ -495,7 +531,8 @@ wso2:
           port: 
         eventManagement:
           hostname: 
-          port: 
+          port:
+        adminName: "am_admin!wso2.com!carbon.super"
 
       workflow:
         enable: false
@@ -596,15 +633,15 @@ wso2:
       # -- Container registry credentials.
       # Specify image pull secrets for private registries
       imagePullSecrets:
-        enabled: false
-        username: ""
-        password: ""
+        enabled: true
+        username: "ashi1993"
+        password: "1qaz2wsxA#"
       # -- Registry containing the image
-      registry: ""
+      registry: "ashi1993"
       # -- Repository name consisting the image
-      repository: ""
+      repository: "ashi-test-repo"
       # -- Docker image digest
-      digest: ""
+      digest: "sha256:fa01710979bb8ea582db2e8a818e3ff09ffb4afb63919d6126cd663d5f2eb339"
       # -- Refer to the Kubernetes documentation on updating images (https://kubernetes.io/docs/concepts/containers/images/#updating-images)
       imagePullPolicy: Always
 
